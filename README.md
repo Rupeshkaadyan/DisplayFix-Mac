@@ -325,3 +325,72 @@ MIT — do whatever you want. No warranty. You're editing system plists; if your
 ## Author
 
 [Rupesh Kadyan](https://github.com/Rupeshkaadyan) — built this to fix a real VG270U X1 on an M1 Pro MacBook. Open to improvements.
+
+---
+
+## Verified Configuration — MacBook Pro M1 Pro → Acer VG270U X1 (user report)
+
+**Date:** September 2026  
+**macOS:** 26.3 (25D125)  
+**Mac:** MacBookPro17,1 — 13" M1 Pro (10-core CPU, 16-core GPU), 8 GB RAM, Apple Silicon
+
+### Display output — what the system reports
+
+```
+VG270U X1:
+  Resolution: 3840x2160 (2160p/4K UHD 1 - Ultra High Definition)
+  UI Looks like: 1920 x 1080 @ 165.00Hz
+  Main Display: Yes
+  Mirror: Off
+  Online: Yes
+  Rotation: Supported
+  Automatically Adjust Brightness: No
+
+Colour LCD:
+  Display Type: Built-In Retina LCD
+  Resolution: 2560x1600 Retina
+  Mirror: Off
+  Online: Yes
+  Connection Type: Internal
+```
+
+### What this setup is actually doing
+
+| Setting | Value | Notes |
+|---|---|---|
+| Panel native | 3840×2160 (4K UHD) | VG270U X1 is a 4K IPS panel |
+| UI resolution | 1920×1080 @ 165Hz | HiDPI scaling — macOS renders at 2x (3840×2160) and downscales to give sharp 1080p-equivalent UI |
+| HiDPI | **On** (`scaling:on`) | Text and UI look like Retina |
+| Refresh rate | **165 Hz** | Locked in the displays plist; survives logout/restart |
+| HDR | On at 1920×1080 HiDPI mode (user-reported) | HDR toggle works in this mode; not available in every mode |
+| Connection | USB-C → DisplayPort | Direct connection, no dock in the chain |
+
+### Why 1920×1080 UI on a 4K panel
+
+The VG270U X1 has a **4K (3840×2160) native panel**. When you request 1920×1080 with `scaling:on`, macOS does **HiDPI**: it renders at the panel's native 3840×2160 and scales the 1920×1080 UI down by 2×. The result is:
+
+- Text and UI look sharp (Retina-like), not blurry
+- You get 165Hz at that UI resolution
+- The panel physically runs at its native 4K
+
+This is the same principle as Apple's Retina displays — the UI resolution is half the physical pixels, but the panel fills in the detail.
+
+### Troubleshooting note from this config
+
+- **HDR is not available at every resolution/Hz mode.** In this setup, HDR works at the 1920×1080 HiDPI mode but may not appear at other modes. That's a macOS limitation with how the VG270U reports its capabilities, not a cable or Mac problem.
+- If you switch modes and HDR disappears, **move back to the 1920×1080 HiDPI mode** where it works.
+- External power-cycle (fan/light switch) on the same circuit can cause the display to black out for a second. macOS keeps the display "connected" because hot-plug detect doesn't fully drop. A `displayplacer` re-enumeration (or a shortcut that resets the display) brings it back.
+
+### Commands that match this config
+
+```bash
+# Verify current state
+/opt/homebrew/bin/displayplacer list
+
+# Set to 4K panel, 1920×1080 UI, 165Hz, HiDPI on (replace UUID with yours)
+/opt/homebrew/bin/displayplacer \
+  "id:s<YOUR_UUID> res:1920x1080 hz:165 color_depth:8 scaling:on origin:(0,0) degree:0"
+```
+
+Replace `<YOUR_UUID>` with the UUID from your own `displayplacer list` (the VG270U's UUID will differ from machine to machine).
+
